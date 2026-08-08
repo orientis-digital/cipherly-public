@@ -1,7 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
 import SecurityBadge from '../components/SecurityBadge';
-import EncryptionSimulator from '../components/EncryptionSimulator';
 import PasswordEntropyCalculator from '../components/PasswordEntropyCalculator';
 import { 
   Shield, Lock, Cpu, EyeOff, Zap, FileSpreadsheet, Download, CheckCircle2, 
@@ -90,14 +89,6 @@ export default function HomePage() {
               <Download className="w-5 h-5" />
               <span>Download Desktop Vault</span>
             </Link>
-
-            <a
-              href="#demo-lab"
-              className="w-full sm:w-auto px-8 py-4 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-slate-200 border border-slate-700 font-semibold text-base flex items-center justify-center gap-2 transition-all"
-            >
-              <Cpu className="w-5 h-5 text-cyan-400" />
-              <span>Try Cipher Lab Live</span>
-            </a>
           </div>
 
           {/* Trust Highlights */}
@@ -121,19 +112,6 @@ export default function HomePage() {
           </div>
 
         </div>
-      </section>
-
-      {/* INTERACTIVE ENCRYPTION LAB */}
-      <section id="demo-lab" className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 space-y-6">
-        <div className="text-center space-y-3">
-          <SecurityBadge text="In-Browser Cryptographic Sandbox" variant="emerald" />
-          <h2 className="text-3xl sm:text-4xl font-bold text-white">Experience Zero-Trust Encryption Live</h2>
-          <p className="text-sm text-slate-400 max-w-xl mx-auto">
-            Test actual client-side AES-256-GCM encryption derived with PBKDF2/SHA-256 right in your web browser. No data ever reaches any server.
-          </p>
-        </div>
-
-        <EncryptionSimulator />
       </section>
 
       {/* CORE FEATURES GRID */}
