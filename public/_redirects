@@ -1,1 +1,6 @@
-/*    /index.html   200
+# Cloudflare Pages Client-Side SPA Routing & Proxy Exclusions
+/api/*     /api/:splat    200
+/admin/*   /admin/:splat  200
+/static/*  /static/:splat 200
+/ws/*      /ws/:splat     200
+/*         /index.html    200
