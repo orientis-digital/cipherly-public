@@ -1,19 +1,22 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import SecurityBadge from '../components/SecurityBadge';
 import { useApp } from '../context/AppContext';
-import { Download, Terminal, CheckCircle2, Copy, Shield, FileCheck, ExternalLink } from 'lucide-react';
+import { Download, Terminal, CheckCircle2, Copy, Shield, RefreshCw, Server } from 'lucide-react';
 
 export default function DownloadsPage() {
   const { userOS, addToast } = useApp();
   const [copiedHash, setCopiedHash] = useState(null);
+  const [liveData, setLiveData] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const releases = [
+  const defaultReleases = [
     {
       os: 'Linux',
       name: 'Linux AppImage (Standalone)',
       filename: 'Cipherly-1.0.0-x86_64.AppImage',
       size: '68.4 MB',
       sha256: '9f8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a',
+      url: 'https://downloads.orientisdigital.com/cipherly/Cipherly-1.0.0-x86_64.AppImage',
       recommended: userOS === 'Linux',
       type: 'AppImage'
     },
@@ -23,6 +26,7 @@ export default function DownloadsPage() {
       filename: 'cipherly_1.0.0_amd64.deb',
       size: '54.2 MB',
       sha256: '8a7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7',
+      url: 'https://downloads.orientisdigital.com/cipherly/cipherly_1.0.0_amd64.deb',
       recommended: false,
       type: 'DEB'
     },
@@ -32,6 +36,7 @@ export default function DownloadsPage() {
       filename: 'cipherly-1.0.0-linux-x64.tar.gz',
       size: '52.8 MB',
       sha256: '7b6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6',
+      url: 'https://downloads.orientisdigital.com/cipherly/cipherly-1.0.0-linux-x64.tar.gz',
       recommended: false,
       type: 'TAR.GZ'
     },
@@ -41,10 +46,53 @@ export default function DownloadsPage() {
       filename: 'cipherly-1.0.0-win-x64.zip',
       size: '72.1 MB',
       sha256: '6c5d4e3f2a1b0c9d8e7f6a5b4c3d2e1f0a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5',
+      url: 'https://downloads.orientisdigital.com/cipherly/cipherly-1.0.0-win-x64.zip',
       recommended: userOS === 'Windows',
       type: 'ZIP'
     }
   ];
+
+  const [releases, setReleases] = useState(defaultReleases);
+
+  useEffect(() => {
+    // Attempt fetching live binary metadata from downloads-server API
+    fetch('https://downloads.orientisdigital.com/api/v1/cipherly/files')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data && data.files && data.files.length > 0) {
+          setLiveData(data);
+          // Map API files to releases
+          const mapped = data.files.map((file) => {
+            const isLinux = file.name.includes('.AppImage') || file.name.includes('.deb') || file.name.includes('.tar.gz');
+            const isWin = file.name.includes('.zip') || file.name.includes('.exe');
+            const fileOS = isWin ? 'Windows' : 'Linux';
+            const fileType = file.name.endsWith('.AppImage')
+              ? 'AppImage'
+              : file.name.endsWith('.deb')
+              ? 'DEB'
+              : file.name.endsWith('.tar.gz')
+              ? 'TAR.GZ'
+              : 'ZIP';
+
+            return {
+              os: fileOS,
+              name: `Cipherly ${fileOS} ${fileType}`,
+              filename: file.name,
+              size: file.size_human || `${(file.size / 1024 / 1024).toFixed(1)} MB`,
+              sha256: file.sha256,
+              url: `https://downloads.orientisdigital.com/cipherly/${file.name}`,
+              recommended: (userOS === 'Linux' && fileType === 'AppImage') || (userOS === 'Windows' && fileType === 'ZIP'),
+              type: fileType
+            };
+          });
+          setReleases(mapped);
+        }
+      })
+      .catch(() => {
+        // Silent fallback to default releases
+      })
+      .finally(() => setIsLoading(false));
+  }, [userOS]);
 
   const copyHash = (hash, filename) => {
     navigator.clipboard.writeText(hash);
@@ -61,8 +109,13 @@ export default function DownloadsPage() {
         <SecurityBadge text={`Detected Operating System: ${userOS}`} variant="cyan" />
         <h1 className="text-4xl sm:text-5xl font-extrabold text-white">Download Cipherly Vault</h1>
         <p className="text-slate-300 text-sm sm:text-base">
-          All release artifacts are cryptographically signed by Orientis Digital PGP key. Download the standalone executable for your platform.
+          All release binaries are hosted on <span className="text-cyan-400 font-mono">downloads-server</span> and cryptographically verified.
         </p>
+
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-900 border border-slate-800 text-[11px] font-mono text-slate-400">
+          <Server className="w-3.5 h-3.5 text-emerald-400" />
+          <span>API Server: downloads.orientisdigital.com</span>
+        </div>
       </div>
 
       {/* Download Cards Grid */}
@@ -110,7 +163,7 @@ export default function DownloadsPage() {
 
             {/* Action Download */}
             <a
-              href={`https://github.com/orientis-digital/cipherly-public/releases/download/v1.0.0/${rel.filename}`}
+              href={rel.url}
               target="_blank"
               rel="noreferrer"
               onClick={() => addToast(`Starting download for ${rel.filename}...`, 'success')}
